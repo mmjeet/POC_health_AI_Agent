@@ -4,9 +4,7 @@ from psycopg2.extras import RealDictCursor
 import google.generativeai as genai
 import PyPDF2
 import io
-import json
 from datetime import datetime
-import re
 
 # Page configuration
 st.set_page_config(
@@ -17,7 +15,7 @@ st.set_page_config(
 )
 
 # Initialize Gemini - Check if API key is valid
-GEMINI_API_KEY = "AIzaSyAZJHtWCI9LBqYVz3FMBfuJqsmo7"
+GEMINI_API_KEY = "AIzaSyAZJHtWCI9LBqYVz3FMBfuJqsmo-UMN"
 if GEMINI_API_KEY and len(GEMINI_API_KEY) > 20:  # Basic validation
     try:
         genai.configure(api_key=GEMINI_API_KEY)
@@ -127,24 +125,52 @@ def get_gemini_insight(report_text, previous_reports=None):
         if previous_reports:
             # Timeline analysis with previous reports
             prompt = f"""
-            Analyze this medical report in the context of the patient's history. 
-            Provide a concise one-liner insight focusing on changes, trends, or important observations.
+            Analyze this medical report and provide insights in the following structured format:
+            
+            A. CURRENT FINDINGS (from this report):
+            1. Most abnormal finding: [One sentence about the most abnormal finding]
+            2. Most important diagnosis: [One sentence about the primary diagnosis]
+            3. Biggest red flag: [One sentence about the most urgent concern]
+            4. Highest impact treatment: [One sentence about the most impactful medicine or test]
+            5. Signal of change: [One sentence about improvement or deterioration]
+            
+            B. SEQUENTIAL ANALYSIS (compared to previous reports):
+            5. Most important change: [One sentence about the most significant change since last report]
+            6. Standout trend: [One sentence about the most notable trend across reports]
+            7. Health journey pattern: [One sentence describing the overall pattern: improving, stable, or worsening]
+            8. Change driver: [One sentence about the main factor driving health changes]
+            
+            C. PREDICTIVE INSIGHTS (forward-looking):
+            9. Likely outcome: [One sentence about the most likely outcome if trends continue]
+            10. Recovery timeline: [One sentence estimating earliest possible recovery time]
+            13. Complication risk: [One sentence about the highest risk complication]
+            15. Critical action step: [One sentence about the most important step to change trajectory]
             
             Previous reports context: {previous_reports}
             
             Current report: {report_text}
             
-            One-liner insight:
+            Provide only the 15 insights in the exact format above, without any additional text.
             """
         else:
             # First-time analysis
             prompt = f"""
-            Analyze this medical report and provide a concise one-liner insight.
-            Focus on the most important finding or observation.
+            Analyze this medical report and provide insights in the following structured format:
+            
+            A. CURRENT FINDINGS (from this report):
+            1. Most abnormal finding: [One sentence about the most abnormal finding]
+            2. Most important diagnosis: [One sentence about the primary diagnosis]
+            3. Biggest red flag: [One sentence about the most urgent concern]
+            4. Highest impact treatment: [One sentence about the most impactful medicine or test]
+            5. Signal of change: [One sentence about improvement or deterioration]
+            
+            B. SEQUENTIAL ANALYSIS: Not enough historical data for comparison
+            
+            C. PREDICTIVE INSIGHTS: Limited without historical data
             
             Report: {report_text}
             
-            One-liner insight:
+            Provide only the insights in the exact format above, without any additional text.
             """
         
         response = model.generate_content(prompt)
